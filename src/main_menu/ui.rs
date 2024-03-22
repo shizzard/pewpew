@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::game::state::State as GameState;
-use crate::game::transition::Event;
-use crate::game::SystemSet;
+use crate::state::GameState;
+use crate::transition::GameStateTransitionEvent;
+use crate::GameSystemSet;
 
 const ROOT_NODE_COLOR: Color = Color::BLACK;
 const BUTTON_NORMAL_COLOR: Color = Color::BLACK;
@@ -25,15 +25,15 @@ pub struct PlayButton;
 #[derive(Component, Debug)]
 pub struct QuitButton;
 
-pub struct UI;
+pub struct MainMenuUIPlugin;
 
-impl Plugin for UI {
+impl Plugin for MainMenuUIPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::MainMenu), spawn_menu)
             .add_systems(OnExit(GameState::MainMenu), despawn_menu)
             .add_systems(
                 Update,
-                (play_button_handler, quit_button_handler).in_set(SystemSet::MainMenu),
+                (play_button_handler, quit_button_handler).in_set(GameSystemSet::MainMenu),
             );
     }
 }
@@ -42,6 +42,57 @@ fn spawn_menu(mut cmd: Commands) {
     cmd.spawn(root_node())
         .with_children(main_menu_wrapper)
         .insert(Tag);
+}
+
+fn despawn_menu(mut cmd: Commands, query: Query<Entity, With<Tag>>) {
+    let Ok(menu) = query.get_single() else {
+        return;
+    };
+    cmd.entity(menu).despawn_recursive();
+}
+
+fn play_button_handler(
+    mut evw_transition: EventWriter<GameStateTransitionEvent>,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<PlayButton>),
+    >,
+) {
+    for (interaction, mut color) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                evw_transition.send(GameStateTransitionEvent::StartEncounter);
+            }
+            Interaction::Hovered => {
+                *color = PLAY_BUTTON_HOVER_COLOR.into();
+            }
+            Interaction::None => {
+                *color = BUTTON_NORMAL_COLOR.into();
+            }
+        }
+    }
+}
+
+fn quit_button_handler(
+    mut evw_transition: EventWriter<GameStateTransitionEvent>,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<QuitButton>),
+    >,
+) {
+    for (interaction, mut color) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                evw_transition.send(GameStateTransitionEvent::QuitGame);
+            }
+            Interaction::Hovered => {
+                *color = QUIT_BUTTON_HOVER_COLOR.into();
+            }
+            Interaction::None => {
+                *color = BUTTON_NORMAL_COLOR.into();
+            }
+        };
+    }
 }
 
 fn root_node() -> NodeBundle {
@@ -153,55 +204,4 @@ fn quit_button_text(root: &mut ChildBuilder) {
         color: Color::WHITE,
         ..default()
     }));
-}
-
-fn despawn_menu(mut cmd: Commands, query: Query<Entity, With<Tag>>) {
-    let Ok(menu) = query.get_single() else {
-        return;
-    };
-    cmd.entity(menu).despawn_recursive();
-}
-
-fn play_button_handler(
-    mut evw_transition: EventWriter<Event>,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<PlayButton>),
-    >,
-) {
-    for (interaction, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                evw_transition.send(Event::Play);
-            }
-            Interaction::Hovered => {
-                *color = PLAY_BUTTON_HOVER_COLOR.into();
-            }
-            Interaction::None => {
-                *color = BUTTON_NORMAL_COLOR.into();
-            }
-        }
-    }
-}
-
-fn quit_button_handler(
-    mut evw_transition: EventWriter<Event>,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<QuitButton>),
-    >,
-) {
-    for (interaction, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                evw_transition.send(Event::Quit);
-            }
-            Interaction::Hovered => {
-                *color = QUIT_BUTTON_HOVER_COLOR.into();
-            }
-            Interaction::None => {
-                *color = BUTTON_NORMAL_COLOR.into();
-            }
-        };
-    }
 }

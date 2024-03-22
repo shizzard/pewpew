@@ -4,9 +4,9 @@ use bevy::window::PrimaryWindow;
 #[derive(Component, Debug)]
 pub struct Tag;
 
-pub struct Camera;
+pub struct MainCameraPlugin;
 
-impl Plugin for Camera {
+impl Plugin for MainCameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, on_startup);
     }
