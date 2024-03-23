@@ -9,11 +9,11 @@ const BUTTON_NORMAL_COLOR: Color = Color::BLACK;
 const PLAY_BUTTON_HOVER_COLOR: Color = Color::MAROON;
 const QUIT_BUTTON_HOVER_COLOR: Color = Color::MAROON;
 
-const LOGO_TEXT: &'static str = "PEW-PEW!";
+const LOGO_TEXT: &str = "PEW-PEW!";
 const LOGO_TEXT_SIZE: f32 = 100.;
-const PLAY_BUTTON_TEXT: &'static str = "PLAY";
+const PLAY_BUTTON_TEXT: &str = "PLAY";
 const PLAY_BUTTON_TEXT_SIZE: f32 = 50.;
-const QUIT_BUTTON_TEXT: &'static str = "QUIT";
+const QUIT_BUTTON_TEXT: &str = "QUIT";
 const QUIT_BUTTON_TEXT_SIZE: f32 = 50.;
 
 #[derive(Component, Debug)]
@@ -106,6 +106,7 @@ fn root_node() -> NodeBundle {
                 top: Val::Percent(20.0),
                 bottom: Val::Percent(20.0),
             },
+            position_type: PositionType::Absolute,
             ..default()
         },
         background_color: ROOT_NODE_COLOR.into(),

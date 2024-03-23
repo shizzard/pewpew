@@ -2,60 +2,75 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::window::PrimaryWindow;
 
+use super::player::PlayerPlugin;
+use super::ui::arena_ui::ArenaUIPlugin;
+use super::EncounterSetupSystemSet;
 use crate::state::GameState;
 
 #[derive(Component, Debug)]
 pub struct Tag;
 
+#[derive(Component, Debug)]
+pub struct BattleArenaTag;
+
 pub struct ArenaPlugin;
 
 impl Plugin for ArenaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Encounter), spawn_encounter)
-            .add_systems(OnExit(GameState::Encounter), despawn_encounter);
+        app.add_plugins(PlayerPlugin)
+            .add_plugins(ArenaUIPlugin)
+            .add_systems(
+                OnEnter(GameState::Encounter),
+                spawn_arena.in_set(EncounterSetupSystemSet::PrepareArena),
+            )
+            .add_systems(OnExit(GameState::Encounter), despawn_arena);
     }
 }
 
-fn spawn_encounter(windows: Query<&Window, With<PrimaryWindow>>, mut cmd: Commands) {
+const BATTLE_ARENA_MARGIN_PX: f32 = 25.;
+fn spawn_arena(windows: Query<&Window, With<PrimaryWindow>>, mut cmd: Commands) {
     let window = windows.get_single().expect("Expected primary window");
-    cmd.spawn(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: "ENCOUNTER\n".to_string(),
-                    style: TextStyle {
-                        font_size: 50.,
-                        color: Color::MAROON,
-                        ..default()
-                    },
-                },
-                TextSection {
-                    value: "ARENA".to_string(),
-                    style: TextStyle {
-                        font_size: 50.,
-                        color: Color::MAROON,
-                        ..default()
-                    },
-                },
-            ],
-            justify: JustifyText::Center,
-            ..default()
-        },
-        text_anchor: Anchor::Center,
-        transform: Transform {
-            translation: Vec3 {
-                x: window.resolution.width() / 2.0,
-                y: window.resolution.height() / 2.0,
-                z: 0.0,
-            },
+    cmd.spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Vec2 {
+                x: window.resolution.width(),
+                y: window.resolution.width(),
+            }
+            .into(),
+            color: Color::BLACK,
+            anchor: Anchor::BottomLeft,
             ..default()
         },
         ..default()
     })
+    .with_children(|root| {
+        root.spawn(SpriteBundle {
+            sprite: Sprite {
+                custom_size: Vec2 {
+                    x: window.resolution.width() - BATTLE_ARENA_MARGIN_PX * 2.,
+                    y: window.resolution.width() - BATTLE_ARENA_MARGIN_PX * 2.,
+                }
+                .into(),
+                color: Color::NAVY,
+                anchor: Anchor::BottomLeft,
+                ..default()
+            },
+            transform: Transform {
+                translation: Vec3 {
+                    x: BATTLE_ARENA_MARGIN_PX,
+                    y: BATTLE_ARENA_MARGIN_PX,
+                    z: 1.,
+                },
+                ..default()
+            },
+            ..default()
+        })
+        .insert(BattleArenaTag);
+    })
     .insert(Tag);
 }
 
-fn despawn_encounter(mut cmd: Commands, query: Query<Entity, With<Tag>>) {
+fn despawn_arena(mut cmd: Commands, query: Query<Entity, With<Tag>>) {
     let Ok(encounter) = query.get_single() else {
         return;
     };

@@ -5,16 +5,16 @@ use crate::encounter::transition::PauseState;
 use crate::transition::GameStateTransitionEvent;
 use crate::GameSystemSet;
 
-const ROOT_NODE_COLOR: Color = Color::BLACK;
+const ROOT_NODE_COLOR: Color = Color::rgba(0., 0., 0., 0.9);
 const BUTTON_NORMAL_COLOR: Color = Color::BLACK;
 const CONTINUE_BUTTON_HOVER_COLOR: Color = Color::MAROON;
 const MAIN_MENU_BUTTON_HOVER_COLOR: Color = Color::MAROON;
 
-const LOGO_TEXT: &'static str = "PEW-PEW!";
+const LOGO_TEXT: &str = "PEW-PEW!";
 const LOGO_TEXT_SIZE: f32 = 100.;
-const CONTINUE_BUTTON_TEXT: &'static str = "CONTINUE";
+const CONTINUE_BUTTON_TEXT: &str = "CONTINUE";
 const CONTINUE_BUTTON_TEXT_SIZE: f32 = 50.;
-const MAIN_MENU_BUTTON_TEXT: &'static str = "MAIN MENU";
+const MAIN_MENU_BUTTON_TEXT: &str = "MAIN MENU";
 const MAIN_MENU_BUTTON_TEXT_SIZE: f32 = 50.;
 
 #[derive(Component, Debug)]
@@ -108,9 +108,11 @@ fn root_node() -> NodeBundle {
                 top: Val::Percent(20.0),
                 bottom: Val::Percent(20.0),
             },
+            position_type: PositionType::Absolute,
             ..default()
         },
         background_color: ROOT_NODE_COLOR.into(),
+        z_index: ZIndex::Global(5),
         ..default()
     }
 }

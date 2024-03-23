@@ -1,5 +1,7 @@
 pub mod arena;
+pub mod component;
 pub mod controls;
+pub mod player;
 pub mod ui;
 
 use bevy::prelude::*;
@@ -8,11 +10,25 @@ use self::arena::ArenaPlugin;
 use self::controls::ControlsPlugin;
 use self::transition::PauseStateTransitionPlugin;
 use self::ui::pause_menu::PauseMenuUIPlugin;
+use crate::state::GameState;
+
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum EncounterSetupSystemSet {
+    PrepareArena,
+    SpawnEntities,
+}
 
 pub struct EncounterPlugin;
 
 impl Plugin for EncounterPlugin {
     fn build(&self, app: &mut App) {
+        app.configure_sets(
+            OnEnter(GameState::Encounter),
+            (
+                EncounterSetupSystemSet::PrepareArena,
+                EncounterSetupSystemSet::SpawnEntities.after(EncounterSetupSystemSet::PrepareArena),
+            ),
+        );
         app.add_plugins(PauseStateTransitionPlugin)
             .add_plugins(ControlsPlugin)
             .add_plugins(ArenaPlugin)
@@ -57,6 +73,9 @@ pub mod transition {
     ///
     /// If you turn this system off, then, if player exits the encounter, pause
     /// menu will hang on the screen forever.
+    ///
+    /// TODO: This may be fixed when sub-states support will land:
+    /// https://github.com/bevyengine/bevy/pull/11426
     fn on_exit_encounter(mut next_state: ResMut<NextState<PauseState>>) {
         next_state.set(PauseState::Running);
     }

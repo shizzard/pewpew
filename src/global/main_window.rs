@@ -7,8 +7,8 @@ use bevy::window::WindowTheme;
 const WINDOW_WIDTH_PX: f32 = 850.0;
 const WINDOW_HEIGHT_PX: f32 = 1050.0;
 
-const WINDOW_TITLE: &'static str = "Pew-pew!";
-const APP_NAME: &'static str = "pewpew.app";
+const WINDOW_TITLE: &str = "Pew-pew!";
+const APP_NAME: &str = "pewpew.app";
 
 pub struct MainWindowPlugin;
 
