@@ -1,19 +1,18 @@
 use bevy::prelude::*;
 
-use crate::encounter::transition::EncounterPauseStateTransitionEvent;
-use crate::encounter::transition::PauseState;
+use crate::state::GameState;
 use crate::transition::GameStateTransitionEvent;
 use crate::GameSystemSet;
 
-const ROOT_NODE_COLOR: Color = Color::rgba(0., 0., 0., 0.9);
+const ROOT_NODE_COLOR: Color = Color::rgb(0., 0., 0.);
 const BUTTON_NORMAL_COLOR: Color = Color::BLACK;
-const CONTINUE_BUTTON_HOVER_COLOR: Color = Color::MAROON;
+const STATS_PLACEHOLDER_TEXT_COLOR: Color = Color::MAROON;
 const MAIN_MENU_BUTTON_HOVER_COLOR: Color = Color::MAROON;
 
-const LOGO_TEXT: &str = "PEW-PEW!";
-const LOGO_TEXT_SIZE: f32 = 100.;
-const CONTINUE_BUTTON_TEXT: &str = "CONTINUE";
-const CONTINUE_BUTTON_TEXT_SIZE: f32 = 50.;
+const GAME_OVER_TEXT: &str = "GAME OVER!";
+const GAME_OVER_TEXT_SIZE: f32 = 100.;
+const STATS_PLACEHOLDER_TEXT: &str = "GAME STATS PLACEHOLDER";
+const STATS_PLACEHOLDER_TEXT_SIZE: f32 = 20.;
 const MAIN_MENU_BUTTON_TEXT: &str = "MAIN MENU";
 const MAIN_MENU_BUTTON_TEXT_SIZE: f32 = 50.;
 
@@ -21,21 +20,17 @@ const MAIN_MENU_BUTTON_TEXT_SIZE: f32 = 50.;
 pub struct Tag;
 
 #[derive(Component, Debug)]
-pub struct ContinueButton;
-
-#[derive(Component, Debug)]
 pub struct MainMenuButton;
 
-pub struct PauseMenuUIPlugin;
+pub struct GameOverUIPlugin;
 
-impl Plugin for PauseMenuUIPlugin {
+impl Plugin for GameOverUIPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(PauseState::Pause), spawn_menu)
-            .add_systems(OnEnter(PauseState::Running), despawn_menu)
+        app.add_systems(OnEnter(GameState::GameOver), spawn_menu)
+            .add_systems(OnExit(GameState::GameOver), despawn_menu)
             .add_systems(
                 Update,
-                (continue_button_handler, main_menu_button_handler)
-                    .in_set(GameSystemSet::Encounter),
+                main_menu_button_handler.in_set(GameSystemSet::GameOver),
             );
     }
 }
@@ -51,28 +46,6 @@ fn despawn_menu(mut cmd: Commands, query: Query<Entity, With<Tag>>) {
         return;
     };
     cmd.entity(menu).despawn_recursive();
-}
-
-fn continue_button_handler(
-    mut evw_transition: EventWriter<EncounterPauseStateTransitionEvent>,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<ContinueButton>),
-    >,
-) {
-    for (interaction, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                evw_transition.send(EncounterPauseStateTransitionEvent);
-            }
-            Interaction::Hovered => {
-                *color = CONTINUE_BUTTON_HOVER_COLOR.into();
-            }
-            Interaction::None => {
-                *color = BUTTON_NORMAL_COLOR.into();
-            }
-        }
-    }
 }
 
 fn main_menu_button_handler(
@@ -129,12 +102,12 @@ fn main_menu_wrapper(root: &mut ChildBuilder) {
         },
         ..default()
     })
-    .with_children(game_logo)
-    .with_children(continue_button)
+    .with_children(game_over)
+    .with_children(stats_placeholder)
     .with_children(main_menu_button);
 }
 
-fn game_logo(root: &mut ChildBuilder) {
+fn game_over(root: &mut ChildBuilder) {
     root.spawn(NodeBundle {
         style: Style {
             width: Val::Percent(100.0),
@@ -145,19 +118,30 @@ fn game_logo(root: &mut ChildBuilder) {
         },
         ..default()
     })
-    .with_children(game_logo_text);
+    .with_children(game_over_text);
 }
 
-fn game_logo_text(root: &mut ChildBuilder) {
-    root.spawn(TextBundle::from_section(LOGO_TEXT, TextStyle {
-        font_size: LOGO_TEXT_SIZE,
+fn game_over_text(root: &mut ChildBuilder) {
+    root.spawn(TextBundle::from_section(GAME_OVER_TEXT, TextStyle {
+        font_size: GAME_OVER_TEXT_SIZE,
         color: Color::WHITE,
         ..default()
     }));
 }
 
-fn continue_button(root: &mut ChildBuilder) {
-    root.spawn(ButtonBundle {
+fn stats_placeholder(root: &mut ChildBuilder) {
+    root.spawn(TextBundle {
+        text: Text {
+            sections: vec![TextSection {
+                value: STATS_PLACEHOLDER_TEXT.into(),
+                style: TextStyle {
+                    font_size: STATS_PLACEHOLDER_TEXT_SIZE,
+                    color: STATS_PLACEHOLDER_TEXT_COLOR,
+                    ..default()
+                },
+            }],
+            ..default()
+        },
         style: Style {
             width: Val::Percent(80.0),
             height: Val::Percent(20.0),
@@ -168,19 +152,8 @@ fn continue_button(root: &mut ChildBuilder) {
             ..default()
         },
         background_color: BUTTON_NORMAL_COLOR.into(),
-        border_color: CONTINUE_BUTTON_HOVER_COLOR.into(),
         ..default()
-    })
-    .insert(ContinueButton)
-    .with_children(continue_button_text);
-}
-
-fn continue_button_text(root: &mut ChildBuilder) {
-    root.spawn(TextBundle::from_section(CONTINUE_BUTTON_TEXT, TextStyle {
-        font_size: CONTINUE_BUTTON_TEXT_SIZE,
-        color: Color::WHITE,
-        ..default()
-    }));
+    });
 }
 
 fn main_menu_button(root: &mut ChildBuilder) {

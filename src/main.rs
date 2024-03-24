@@ -1,9 +1,11 @@
 pub mod encounter;
+pub mod game_over;
 pub mod global;
 pub mod main_menu;
 
 use bevy::prelude::*;
 use encounter::transition::PauseState;
+use game_over::ui::GameOverUIPlugin;
 use state::GameState;
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -33,11 +35,44 @@ fn main() {
                 .after(GameSystemSet::Global),
         ),
     );
+    app.configure_sets(
+        FixedUpdate,
+        (
+            GameSystemSet::Global,
+            GameSystemSet::MainMenu
+                .run_if(in_state(GameState::MainMenu))
+                .after(GameSystemSet::Global),
+            GameSystemSet::Encounter
+                .run_if(in_state(GameState::Encounter))
+                .after(GameSystemSet::Global),
+            GameSystemSet::EncounterPausable
+                .run_if(in_state(GameState::Encounter))
+                .run_if(in_state(PauseState::Running))
+                .after(GameSystemSet::Global),
+        ),
+    );
+    app.configure_sets(
+        PostUpdate,
+        (
+            GameSystemSet::Global,
+            GameSystemSet::MainMenu
+                .run_if(in_state(GameState::MainMenu))
+                .after(GameSystemSet::Global),
+            GameSystemSet::Encounter
+                .run_if(in_state(GameState::Encounter))
+                .after(GameSystemSet::Global),
+            GameSystemSet::EncounterPausable
+                .run_if(in_state(GameState::Encounter))
+                .run_if(in_state(PauseState::Running))
+                .after(GameSystemSet::Global),
+        ),
+    );
 
     app.add_plugins(global::GlobalPlugin)
         .add_plugins(transition::GameStateTransitionPlugin)
         .add_plugins(main_menu::ui::MainMenuUIPlugin)
-        .add_plugins(encounter::EncounterPlugin);
+        .add_plugins(encounter::EncounterPlugin)
+        .add_plugins(GameOverUIPlugin);
 
     app.run();
 }
@@ -89,6 +124,9 @@ pub mod transition {
             }
             (GameState::Encounter, GameStateTransitionEvent::QuitEncounter) => {
                 next_state.set(GameState::MainMenu);
+            }
+            (GameState::Encounter, GameStateTransitionEvent::GameOver) => {
+                next_state.set(GameState::GameOver);
             }
             (GameState::GameOver, GameStateTransitionEvent::QuitEncounter) => {
                 next_state.set(GameState::MainMenu);

@@ -3,6 +3,7 @@ pub mod component;
 pub mod controls;
 pub mod enemy;
 pub mod player;
+pub mod projectile;
 pub mod ui;
 
 use bevy::prelude::*;

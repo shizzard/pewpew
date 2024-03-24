@@ -4,6 +4,7 @@ use bevy::window::PrimaryWindow;
 
 use super::enemy::EnemyPlugin;
 use super::player::PlayerPlugin;
+use super::projectile::ProjectilePlugin;
 use super::ui::arena_ui::ArenaUIPlugin;
 use super::EncounterSetupSystemSet;
 use crate::state::GameState;
@@ -19,6 +20,7 @@ pub struct ArenaPlugin;
 impl Plugin for ArenaPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(PlayerPlugin)
+            .add_plugins(ProjectilePlugin)
             .add_plugins(EnemyPlugin)
             .add_plugins(ArenaUIPlugin)
             .add_systems(

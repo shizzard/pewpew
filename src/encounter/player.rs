@@ -21,9 +21,9 @@ const PLAYER_SPRITE_HEIGHT: f32 = 50.;
 
 impl PlayerBundle {
     pub fn new(arena_width: f32, speed: f32) -> Self {
-        let left_bound = 0.;
-        let right_bound = arena_width - PLAYER_SPRITE_WIDTH;
-        let translation = (arena_width / 2., 0., 1.).into();
+        let left_bound = PLAYER_SPRITE_WIDTH / 2.;
+        let right_bound = arena_width - PLAYER_SPRITE_WIDTH / 2.;
+        let translation = (arena_width / 2., PLAYER_SPRITE_HEIGHT / 2., 1.).into();
         PlayerBundle {
             movable: MovableX {
                 bound: (left_bound, right_bound).into(),
@@ -46,10 +46,7 @@ impl PlayerBundle {
             sprite: Sprite {
                 color: Color::MAROON,
                 custom_size: Some(self.size.vec),
-                ..default()
-            },
-            transform: Transform {
-                translation: (PLAYER_SPRITE_WIDTH / 2., PLAYER_SPRITE_HEIGHT / 2., 0.).into(),
+                anchor: bevy::sprite::Anchor::Center,
                 ..default()
             },
             ..default()

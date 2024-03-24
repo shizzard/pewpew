@@ -17,25 +17,6 @@ impl From<(f32, f32)> for MovementBound {
 
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
-pub struct MovementXYBound {
-    pub left: f32,
-    pub right: f32,
-    pub top: f32,
-    pub bottom: f32,
-}
-impl From<((f32, f32), (f32, f32))> for MovementXYBound {
-    fn from(value: ((f32, f32), (f32, f32))) -> Self {
-        Self {
-            left: value.0 .0,
-            right: value.0 .1,
-            top: value.1 .0,
-            bottom: value.1 .1,
-        }
-    }
-}
-
-#[derive(Component, Debug, Default, Reflect)]
-#[reflect(Component)]
 pub struct Speed(f32);
 impl From<f32> for Speed {
     fn from(value: f32) -> Self {
@@ -46,6 +27,14 @@ impl From<Speed> for f32 {
     fn from(val: Speed) -> Self {
         val.0
     }
+}
+
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub enum MovementDirectionX {
+    #[default]
+    Left,
+    Right,
 }
 
 #[derive(Component, Debug, Default, Reflect)]
@@ -93,12 +82,12 @@ impl MovableY {
 
     pub fn move_down(&self, transform: &mut Transform, timer: &Res<Time>) {
         let new_y: f32 = transform.translation.y - self.speed.0 * timer.delta_seconds();
-        transform.translation.y = new_y.min(self.bound.min);
+        transform.translation.y = new_y.max(self.bound.min);
     }
 
     pub fn move_up(&self, transform: &mut Transform, timer: &Res<Time>) {
         let new_y: f32 = transform.translation.y + self.speed.0 * timer.delta_seconds();
-        transform.translation.y = new_y.max(self.bound.max);
+        transform.translation.y = new_y.min(self.bound.max);
     }
 }
 

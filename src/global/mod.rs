@@ -4,6 +4,8 @@ pub mod main_window;
 use bevy::input::common_conditions::input_toggle_active;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_rand::prelude::EntropyPlugin;
+use bevy_rand::prelude::WyRand;
 
 use self::main_camera::MainCameraPlugin;
 use self::main_window::MainWindowPlugin;
@@ -18,6 +20,7 @@ impl Plugin for GlobalPlugin {
             .add_plugins(
                 WorldInspectorPlugin::new().run_if(input_toggle_active(false, KeyCode::KeyI)),
             )
+            .add_plugins(EntropyPlugin::<WyRand>::default())
             .register_type::<MovableX>()
             .register_type::<MovableY>()
             .register_type::<MovementBound>()
