@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use bevy::sprite::Anchor;
 
+use super::component::EntitySize;
 use super::component::MovableX;
 use super::EncounterSetupSystemSet;
 use crate::encounter::arena::BattleArenaTag;
@@ -9,24 +9,27 @@ use crate::state::GameState;
 #[derive(Component, Debug)]
 pub struct Tag;
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 pub struct PlayerBundle {
     movable: MovableX,
+    size: EntitySize,
     spatial: SpatialBundle,
 }
 
+const PLAYER_SPRITE_WIDTH: f32 = 50.;
+const PLAYER_SPRITE_HEIGHT: f32 = 50.;
+
 impl PlayerBundle {
-    pub fn new(
-        translation: Vec3,
-        movement_left_bound: f32,
-        movement_right_bound: f32,
-        speed: f32,
-    ) -> Self {
+    pub fn new(arena_width: f32, speed: f32) -> Self {
+        let left_bound = 0.;
+        let right_bound = arena_width - PLAYER_SPRITE_WIDTH;
+        let translation = (arena_width / 2., 0., 1.).into();
         PlayerBundle {
             movable: MovableX {
-                bound: (movement_left_bound, movement_right_bound).into(),
+                bound: (left_bound, right_bound).into(),
                 speed: speed.into(),
             },
+            size: (PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT).into(),
             spatial: SpatialBundle {
                 transform: Transform {
                     translation,
@@ -34,6 +37,22 @@ impl PlayerBundle {
                 },
                 ..default()
             },
+            ..default()
+        }
+    }
+
+    pub fn sprite_bundle(&self) -> SpriteBundle {
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::MAROON,
+                custom_size: Some(self.size.vec),
+                ..default()
+            },
+            transform: Transform {
+                translation: (PLAYER_SPRITE_WIDTH / 2., PLAYER_SPRITE_HEIGHT / 2., 0.).into(),
+                ..default()
+            },
+            ..default()
         }
     }
 }
@@ -53,32 +72,15 @@ fn spawn_player_bundle(mut cmd: Commands, query: Query<(Entity, &Sprite), With<B
     let (battle_arena_entity, battle_arena_sprite) =
         query.get_single().expect("Expected battle arena");
     let battle_arena_width = battle_arena_sprite.custom_size.unwrap();
+    let player_bundle = PlayerBundle::new(battle_arena_width.x, PLAYER_SPEED);
+    let sprite_bundle = player_bundle.sprite_bundle();
     let player = cmd
-        .spawn(PlayerBundle::new(
-            (battle_arena_width.x / 2., 0., 0.).into(),
-            PLAYER_SPRITE_WIDTH / 2.,
-            battle_arena_width.x - PLAYER_SPRITE_WIDTH / 2.,
-            PLAYER_SPEED,
-        ))
-        .with_children(player_sprite)
+        .spawn(player_bundle)
+        .with_children(|root| {
+            root.spawn(sprite_bundle);
+        })
+        .insert(Name::new("Player"))
         .insert(Tag)
         .id();
     cmd.entity(battle_arena_entity).add_child(player);
-}
-
-const PLAYER_SPRITE_WIDTH: f32 = 50.;
-const PLAYER_SPRITE_HEIGHT: f32 = 50.;
-fn player_sprite(root: &mut ChildBuilder) {
-    root.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: Color::MAROON,
-            custom_size: Some(Vec2 {
-                x: PLAYER_SPRITE_WIDTH,
-                y: PLAYER_SPRITE_HEIGHT,
-            }),
-            anchor: Anchor::BottomCenter,
-            ..Sprite::default()
-        },
-        ..SpriteBundle::default()
-    });
 }

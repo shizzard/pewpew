@@ -114,7 +114,7 @@ fn ui_zone_2(root: &mut ChildBuilder) {
             height: Val::Percent(100.0),
             ..default()
         },
-        background_color: Color::MAROON.into(),
+        background_color: Color::DARK_GREEN.into(),
         ..default()
     });
 }
@@ -126,7 +126,7 @@ fn ui_zone_3(root: &mut ChildBuilder) {
             height: Val::Percent(100.0),
             ..default()
         },
-        background_color: Color::MAROON.into(),
+        background_color: Color::DARK_GRAY.into(),
         ..default()
     });
 }
@@ -138,7 +138,7 @@ fn ui_zone_4(root: &mut ChildBuilder) {
             height: Val::Percent(100.0),
             ..default()
         },
-        background_color: Color::MAROON.into(),
+        background_color: Color::MIDNIGHT_BLUE.into(),
         ..default()
     });
 }

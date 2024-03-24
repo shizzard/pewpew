@@ -3,6 +3,7 @@ pub mod global;
 pub mod main_menu;
 
 use bevy::prelude::*;
+use encounter::transition::PauseState;
 use state::GameState;
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -10,6 +11,7 @@ pub enum GameSystemSet {
     Global,
     MainMenu,
     Encounter,
+    EncounterPausable,
     GameOver,
 }
 
@@ -24,6 +26,10 @@ fn main() {
                 .after(GameSystemSet::Global),
             GameSystemSet::Encounter
                 .run_if(in_state(GameState::Encounter))
+                .after(GameSystemSet::Global),
+            GameSystemSet::EncounterPausable
+                .run_if(in_state(GameState::Encounter))
+                .run_if(in_state(PauseState::Running))
                 .after(GameSystemSet::Global),
         ),
     );

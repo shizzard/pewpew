@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::window::PrimaryWindow;
 
+use super::enemy::EnemyPlugin;
 use super::player::PlayerPlugin;
 use super::ui::arena_ui::ArenaUIPlugin;
 use super::EncounterSetupSystemSet;
@@ -18,6 +19,7 @@ pub struct ArenaPlugin;
 impl Plugin for ArenaPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(PlayerPlugin)
+            .add_plugins(EnemyPlugin)
             .add_plugins(ArenaUIPlugin)
             .add_systems(
                 OnEnter(GameState::Encounter),
@@ -65,8 +67,10 @@ fn spawn_arena(windows: Query<&Window, With<PrimaryWindow>>, mut cmd: Commands) 
             },
             ..default()
         })
+        .insert(Name::new("BattleArena"))
         .insert(BattleArenaTag);
     })
+    .insert(Name::new("Arena"))
     .insert(Tag);
 }
 

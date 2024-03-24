@@ -1,6 +1,7 @@
 pub mod arena;
 pub mod component;
 pub mod controls;
+pub mod enemy;
 pub mod player;
 pub mod ui;
 

@@ -10,7 +10,11 @@ impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (pause_controls_handler, movement_controls_handler).in_set(GameSystemSet::Encounter),
+            pause_controls_handler.in_set(GameSystemSet::Encounter),
+        )
+        .add_systems(
+            Update,
+            movement_controls_handler.in_set(GameSystemSet::EncounterPausable),
         );
     }
 }
