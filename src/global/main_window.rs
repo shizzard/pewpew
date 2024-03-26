@@ -32,6 +32,7 @@ impl Plugin for MainWindowPlugin {
             }),
             LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin,
-        ));
+        ))
+        .insert_resource(ClearColor(Color::BLACK));
     }
 }

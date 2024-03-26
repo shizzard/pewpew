@@ -1,65 +1,64 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use bevy::window::PrimaryWindow;
 use bevy_prng::WyRand;
 use bevy_rand::resource::GlobalEntropy;
 use rand::Rng;
 
-use super::component::EntitySize;
-use super::component::MovableX;
-use super::component::MovableY;
-use super::component::MovementDirectionX;
+use super::health::HealthBundle;
 use super::EncounterSetupSystemSet;
-use crate::encounter::arena::BattleArenaTag;
+use crate::encounter::component::*;
 use crate::state::GameState;
+use crate::transition::GameStateTransitionEvent;
 use crate::GameSystemSet;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Default)]
 pub struct Tag;
 
-#[derive(Bundle)]
-pub struct Enemy {
+#[derive(Bundle, Default)]
+pub struct EnemyBundle {
     size: EntitySize,
     movable_x: MovableX,
     movable_y: MovableY,
+    movement_direction: MovementDirectionX,
     spatial: SpatialBundle,
+    tag: Tag,
+    name: Name,
 }
 
 pub const ENEMY_ENTITY_WIDTH: f32 = 30.;
 pub const ENEMY_ENTITY_HEIGHT: f32 = 30.;
-impl Enemy {
-    pub fn new(
-        x: f32,
-        y: f32,
-        arena_size: Vec2,
-        horizontal_speed: f32,
-        vertical_speed: f32,
-    ) -> Self {
-        let translation = (x, y, 1.).into();
-        Enemy {
+impl EnemyBundle {
+    pub fn new(n: usize, window: &Window, rng: &mut ResMut<GlobalEntropy<WyRand>>) -> Self {
+        let left_bound = super::battle_arena_left_bound(window) + ENEMY_ENTITY_WIDTH / 2.;
+        let right_bound = super::battle_arena_right_bound(window) - ENEMY_ENTITY_WIDTH / 2.;
+        let top_bound: f32 = super::battle_arena_top_bound(window) - ENEMY_ENTITY_HEIGHT / 2.;
+        let bottom_bound: f32 = super::battle_arena_bottom_bound(window) + ENEMY_ENTITY_HEIGHT / 2.;
+        let spawn_area_top = super::battle_arena_spawn_top(window);
+        let spawn_area_bottom = super::battle_arena_spawn_bottom(window);
+        let spawn_vec = Vec2::new(
+            rng.gen_range(left_bound..right_bound),
+            rng.gen_range(spawn_area_bottom..spawn_area_top),
+        );
+        let horizontal_speed =
+            rng.gen_range(ENEMY_HORIZONTAL_SPEED_MIN..ENEMY_HORIZONTAL_SPEED_MAX);
+        let vertical_speed = rng.gen_range(ENEMY_VERTICAL_SPEED_MIN..ENEMY_VERTICAL_SPEED_MAX);
+        let translation = (spawn_vec.x, spawn_vec.y, 1.).into();
+
+        Self {
             size: (ENEMY_ENTITY_WIDTH, ENEMY_ENTITY_HEIGHT).into(),
             movable_x: MovableX {
-                bound: (
-                    ENEMY_ENTITY_WIDTH / 2.,
-                    arena_size.x - ENEMY_ENTITY_WIDTH / 2.,
-                )
-                    .into(),
+                bound: (left_bound, right_bound).into(),
                 speed: horizontal_speed.into(),
             },
             movable_y: MovableY {
-                bound: (
-                    ENEMY_ENTITY_HEIGHT / 2.,
-                    arena_size.y - ENEMY_ENTITY_HEIGHT / 2.,
-                )
-                    .into(),
+                bound: (bottom_bound, top_bound).into(),
                 speed: vertical_speed.into(),
             },
-            spatial: SpatialBundle {
-                transform: Transform {
-                    translation,
-                    ..default()
-                },
-                ..default()
-            },
+            movement_direction: MovementDirectionX::default(),
+            spatial: SpatialBundle::from_transform(Transform::from_translation(translation)),
+            name: Name::new(format!("Enemy #{}", n)),
+            ..default()
         }
     }
 
@@ -77,6 +76,14 @@ impl Enemy {
             ..SpriteBundle::default()
         }
     }
+
+    pub fn health_bundle(&self, n: usize) -> HealthBundle {
+        HealthBundle::new(
+            100.,
+            Vec2::new(ENEMY_ENTITY_WIDTH, ENEMY_ENTITY_HEIGHT),
+            format!("Enemy #{} Health", n),
+        )
+    }
 }
 
 pub struct EnemyPlugin;
@@ -89,6 +96,10 @@ impl Plugin for EnemyPlugin {
         .add_systems(
             Update,
             move_enemies.in_set(GameSystemSet::EncounterPausable),
+        )
+        .add_systems(
+            Update,
+            game_over_swarm_criteria_handler.in_set(GameSystemSet::EncounterPausable),
         );
     }
 }
@@ -97,37 +108,24 @@ const ENEMY_HORIZONTAL_SPEED_MIN: f32 = 30.;
 const ENEMY_HORIZONTAL_SPEED_MAX: f32 = 100.;
 const ENEMY_VERTICAL_SPEED_MIN: f32 = 5.;
 const ENEMY_VERTICAL_SPEED_MAX: f32 = 15.;
-const ENEMY_SWARM_COUNT: u8 = 50;
+const ENEMY_SWARM_COUNT: usize = 50;
 fn spawn_enemy_swarm_bundle(
+    windows: Query<&Window, With<PrimaryWindow>>,
     mut cmd: Commands,
-    query: Query<(Entity, &Sprite), With<BattleArenaTag>>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
-    let (battle_arena_entity, battle_arena_sprite) =
-        query.get_single().expect("Expected battle arena");
-    let battle_arena_size = battle_arena_sprite.custom_size.unwrap();
+    let window = windows.get_single().expect("Expected primary window");
     for n in 0..ENEMY_SWARM_COUNT {
-        let enemy = Enemy::new(
-            rng.gen_range((battle_arena_size.x * 0.1)..(battle_arena_size.x * 0.9)),
-            rng.gen_range((battle_arena_size.y * 0.6)..(battle_arena_size.y * 0.9)),
-            battle_arena_size,
-            rng.gen_range(ENEMY_HORIZONTAL_SPEED_MIN..ENEMY_HORIZONTAL_SPEED_MAX),
-            rng.gen_range(ENEMY_VERTICAL_SPEED_MIN..ENEMY_VERTICAL_SPEED_MAX),
-        );
+        let enemy = EnemyBundle::new(n, window, &mut rng);
         let enemy_sprite = enemy.sprite();
-        let enemy = cmd
-            .spawn(enemy)
+        let enemy_health = enemy.health_bundle(n);
+        cmd.spawn(enemy)
             .with_children(|root| {
                 root.spawn(enemy_sprite);
             })
-            .insert(Name::new(format!("Enemy Entity #{}", n)))
-            .insert(match rng.gen_bool(0.5) {
-                true => MovementDirectionX::Left,
-                false => MovementDirectionX::Right,
-            })
-            .insert(Tag)
-            .id();
-        cmd.entity(battle_arena_entity).add_child(enemy);
+            .with_children(|root| {
+                root.spawn(enemy_health);
+            });
     }
 }
 
@@ -164,4 +162,19 @@ fn move_enemies(
             enemy_movable_y.move_down(&mut enemy_transform, &timer);
         },
     );
+}
+
+fn game_over_swarm_criteria_handler(
+    windows: Query<&Window, With<PrimaryWindow>>,
+    mut evw_transition: EventWriter<GameStateTransitionEvent>,
+    enemy_entities_query: Query<(&Transform, &Name), With<super::enemy::Tag>>,
+) {
+    let window = windows.get_single().expect("Expected primary window");
+    let touchdown_y = super::battle_arena_bottom_bound(window) + ENEMY_ENTITY_HEIGHT / 2.;
+    if enemy_entities_query
+        .iter()
+        .any(|(entity_transform, _name)| entity_transform.translation.y <= touchdown_y)
+    {
+        evw_transition.send(GameStateTransitionEvent::GameOver);
+    }
 }

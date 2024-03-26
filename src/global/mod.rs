@@ -25,6 +25,7 @@ impl Plugin for GlobalPlugin {
             .register_type::<MovableY>()
             .register_type::<MovementBound>()
             .register_type::<Speed>()
-            .register_type::<EntitySize>();
+            .register_type::<EntitySize>()
+            .register_type::<Health>();
     }
 }

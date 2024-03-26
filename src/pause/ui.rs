@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-use crate::encounter::transition::EncounterPauseStateTransitionEvent;
-use crate::encounter::transition::PauseState;
+use super::transition::EncounterPauseStateTransitionEvent;
+use super::transition::PauseState;
 use crate::transition::GameStateTransitionEvent;
 use crate::GameSystemSet;
 
@@ -36,6 +36,10 @@ impl Plugin for PauseMenuUIPlugin {
                 Update,
                 (continue_button_handler, main_menu_button_handler)
                     .in_set(GameSystemSet::Encounter),
+            )
+            .add_systems(
+                Update,
+                pause_controls_handler.in_set(GameSystemSet::Encounter),
             );
     }
 }
@@ -94,6 +98,15 @@ fn main_menu_button_handler(
                 *color = BUTTON_NORMAL_COLOR.into();
             }
         };
+    }
+}
+
+fn pause_controls_handler(
+    mut evw_transition: EventWriter<EncounterPauseStateTransitionEvent>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        evw_transition.send(EncounterPauseStateTransitionEvent);
     }
 }
 

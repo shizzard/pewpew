@@ -115,3 +115,24 @@ impl From<(f32, f32)> for EntitySize {
         .into()
     }
 }
+
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct Health {
+    pub max: f32,
+    pub actual: f32,
+}
+
+impl Health {
+    pub fn new(max: f32) -> Self {
+        Self { max, actual: max }
+    }
+
+    pub fn ratio(&self) -> f32 {
+        self.actual / self.max
+    }
+
+    pub fn dead(&self) -> bool {
+        self.actual <= 0.
+    }
+}

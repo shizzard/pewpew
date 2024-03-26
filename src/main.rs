@@ -2,10 +2,12 @@ pub mod encounter;
 pub mod game_over;
 pub mod global;
 pub mod main_menu;
+pub mod pause;
+pub mod util;
 
 use bevy::prelude::*;
-use encounter::transition::PauseState;
 use game_over::ui::GameOverUIPlugin;
+use pause::transition::PauseState;
 use state::GameState;
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -72,6 +74,7 @@ fn main() {
         .add_plugins(transition::GameStateTransitionPlugin)
         .add_plugins(main_menu::ui::MainMenuUIPlugin)
         .add_plugins(encounter::EncounterPlugin)
+        .add_plugins(pause::PausePlugin)
         .add_plugins(GameOverUIPlugin);
 
     app.run();
