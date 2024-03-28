@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use super::EncounterSetupSystemSet;
+use crate::encounter::component::weapon::*;
 use crate::encounter::component::*;
 use crate::state::GameState;
 use crate::GameSystemSet;
@@ -14,6 +15,7 @@ pub struct PlayerBundle {
     movable: MovableX,
     size: EntitySize,
     spatial: SpatialBundle,
+    weapon: Weapon,
     tag: Tag,
     name: Name,
 }
@@ -42,6 +44,7 @@ impl PlayerBundle {
             },
             size: (PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT).into(),
             spatial: SpatialBundle::from_transform(Transform::from_translation(translation)),
+            weapon: Weapon::shotgun(),
             name: Name::new("Player"),
             ..default()
         }

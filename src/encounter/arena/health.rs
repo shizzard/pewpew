@@ -25,7 +25,7 @@ impl HealthBundle {
                     custom_size: Some(size),
                     ..default()
                 },
-                transform: Transform::from_scale(Vec3::splat(0.)),
+                transform: Transform::from_scale(Vec3::new(0., 0., 1.)),
                 ..default()
             },
             name: Name::new(name),

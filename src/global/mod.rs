@@ -9,6 +9,8 @@ use bevy_rand::prelude::WyRand;
 
 use self::main_camera::MainCameraPlugin;
 use self::main_window::MainWindowPlugin;
+use crate::encounter::component::weapon::WeaponShotParameters;
+use crate::encounter::component::weapon::*;
 use crate::encounter::component::*;
 
 pub struct GlobalPlugin;
@@ -20,12 +22,14 @@ impl Plugin for GlobalPlugin {
             .add_plugins(
                 WorldInspectorPlugin::new().run_if(input_toggle_active(false, KeyCode::KeyI)),
             )
-            .add_plugins(EntropyPlugin::<WyRand>::default())
-            .register_type::<MovableX>()
+            .add_plugins(EntropyPlugin::<WyRand>::default());
+        app.register_type::<MovableX>()
             .register_type::<MovableY>()
             .register_type::<MovementBound>()
             .register_type::<Speed>()
             .register_type::<EntitySize>()
             .register_type::<Health>();
+        app.register_type::<Weapon>()
+            .register_type::<WeaponShotParameters>();
     }
 }

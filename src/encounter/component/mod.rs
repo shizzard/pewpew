@@ -1,3 +1,7 @@
+pub mod weapon;
+
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 #[derive(Component, Debug, Default, Reflect)]
@@ -134,5 +138,34 @@ impl Health {
 
     pub fn dead(&self) -> bool {
         self.actual <= 0.
+    }
+}
+
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct Velocity {
+    pub speed: f32,
+}
+
+impl Velocity {
+    pub fn new(speed: f32) -> Self {
+        Self { speed }
+    }
+
+    pub fn advance(&self, timer: &Res<Time>, transform: &mut Transform) {
+        transform.translation += transform.up() * self.speed * timer.delta_seconds();
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct GunTimer {
+    pub timer: Timer,
+}
+
+impl Default for GunTimer {
+    fn default() -> Self {
+        let timer = Timer::new(Duration::from_millis(100), TimerMode::Once);
+        Self { timer }
     }
 }
